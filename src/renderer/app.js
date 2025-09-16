@@ -165,6 +165,12 @@ class DesktopCalendarWidget {
     
     // 拖拽功能
     startDrag(e) {
+        // 在 Electron 环境中，拖拽由 CSS -webkit-app-region: drag 处理
+        if (window.electronAPI) {
+            return;
+        }
+        
+        // 在非 Electron 环境中的拖拽逻辑
         this.isDragging = true;
         this.container.classList.add('dragging');
         const rect = this.container.getBoundingClientRect();
@@ -172,19 +178,17 @@ class DesktopCalendarWidget {
         this.dragOffset.y = e.clientY - rect.top;
         
         e.preventDefault();
-        
-        if (window.electronAPI) {
-            return;
-        }
     }
     
     drag(e) {
         if (!this.isDragging) return;
         
+        // 在 Electron 环境中，拖拽由原生处理
         if (window.electronAPI) {
             return;
         }
         
+        // 在非 Electron 环境中的拖拽逻辑
         const x = e.clientX - this.dragOffset.x;
         const y = e.clientY - this.dragOffset.y;
         
@@ -271,9 +275,19 @@ class DesktopCalendarWidget {
         
         this.container.style.width = newWidth + 'px';
         this.container.style.height = newHeight + 'px';
-        this.container.style.left = newLeft + 'px';
-        this.container.style.top = newTop + 'px';
-        this.container.style.right = 'auto';
+        
+        // 如果不是全屏模式，保持当前位置
+        if (!this.container.classList.contains('fullscreen-mode')) {
+            this.container.style.position = 'fixed';
+            this.container.style.transform = '';
+            this.container.style.right = 'auto';
+            this.container.style.margin = '0';
+            // 保持当前位置，不改变 left 和 top
+        } else {
+            this.container.style.left = newLeft + 'px';
+            this.container.style.top = newTop + 'px';
+            this.container.style.right = 'auto';
+        }
         
         this.updateLayoutForSize(newWidth, newHeight);
     }
@@ -287,20 +301,37 @@ class DesktopCalendarWidget {
         this.resizeStart = null;
         
         document.body.style.userSelect = '';
-        this.saveSettings();
         
         const rect = this.container.getBoundingClientRect();
-        this.showNotification(`尺寸已调整为: ${Math.round(rect.width)} × ${Math.round(rect.height)}`);
+        const newWidth = Math.round(rect.width);
+        const newHeight = Math.round(rect.height);
+        
+        // 请求主进程调整窗口大小
+        if (window.electronAPI && window.electronAPI.resizeWindow) {
+            window.electronAPI.resizeWindow(newWidth, newHeight).then(result => {
+                if (result.success) {
+                    console.log(`窗口大小已调整为: ${newWidth} × ${newHeight}`);
+                }
+            }).catch(error => {
+                console.error('调整窗口大小失败:', error);
+            });
+        }
+        
+        this.saveSettings();
+        this.showNotification(`尺寸已调整为: ${newWidth} × ${newHeight}`);
     }
     
     updateLayoutForSize(width, height) {
         const content = this.content;
         if (!content) return;
         
+        // 确保内容区域有足够的高度
         if (height && height > 0) {
-            content.style.height = `calc(${height}px - 60px)`;
+            content.style.height = `${height - 60}px`;
+            content.style.maxHeight = `${height - 60}px`;
         } else {
             content.style.height = 'calc(100% - 60px)';
+            content.style.maxHeight = 'calc(100% - 60px)';
         }
         
         if (width > 500) {
@@ -385,7 +416,13 @@ class DesktopCalendarWidget {
     }
     
     close() {
-        this.container.style.display = 'none';
+        // 请求主进程关闭窗口
+        if (window.electronAPI && window.electronAPI.closeWindow) {
+            window.electronAPI.closeWindow();
+        } else {
+            // 如果没有 Electron API，则隐藏容器
+            this.container.style.display = 'none';
+        }
     }
     
     toggleSettings() {
@@ -423,32 +460,54 @@ class DesktopCalendarWidget {
         const screenHeight = window.screen.height;
         
         const sizes = {
-            small: { width: '250px', height: 'auto' },
-            medium: { width: '350px', height: 'auto' },
-            large: { width: '500px', height: 'auto' },
+            small: { width: 280, height: 450 },
+            medium: { width: 350, height: 600 },
+            large: { width: 500, height: 700 },
             fullscreen: { 
-                width: screenWidth + 'px', 
-                height: screenHeight + 'px',
+                width: screenWidth, 
+                height: screenHeight,
                 position: { left: '0px', top: '0px' }
             }
         };
         
         const newSize = sizes[size];
-        this.container.style.width = newSize.width;
-        this.container.style.height = newSize.height;
         
-        if (size === 'fullscreen' && newSize.position) {
-            this.container.style.left = newSize.position.left;
-            this.container.style.top = newSize.position.top;
+        // 设置容器样式
+        this.container.style.width = newSize.width + 'px';
+        this.container.style.height = newSize.height + 'px';
+        
+        if (size === 'fullscreen') {
+            // 全屏模式特殊处理
+            this.container.style.left = '0px';
+            this.container.style.top = '0px';
             this.container.style.right = 'auto';
+            this.container.style.margin = '0';
+            this.container.style.position = 'fixed';
+            this.container.style.transform = '';
+        } else {
+            // 其他尺寸保持当前位置，不强制居中
+            this.container.style.position = 'fixed';
+            this.container.style.transform = '';
+            this.container.style.right = 'auto';
+            this.container.style.margin = '0';
+            // 保持当前位置，不改变 left 和 top
         }
         
-        const width = parseInt(newSize.width);
-        const height = parseInt(newSize.height) || 400;
-        this.updateLayoutForSize(width, height);
+        // 请求主进程调整窗口大小
+        if (window.electronAPI && window.electronAPI.resizeWindow) {
+            window.electronAPI.resizeWindow(newSize.width, newSize.height).then(result => {
+                if (result.success) {
+                    console.log(`窗口大小已调整为: ${newSize.width} × ${newSize.height}`);
+                }
+            }).catch(error => {
+                console.error('调整窗口大小失败:', error);
+            });
+        }
+        
+        this.updateLayoutForSize(newSize.width, newSize.height);
         
         setTimeout(() => {
-            this.updateLayoutForSize(width, height);
+            this.updateLayoutForSize(newSize.width, newSize.height);
         }, 50);
         
         this.saveSettings();
@@ -483,6 +542,19 @@ class DesktopCalendarWidget {
         this.container.style.left = '0px';
         this.container.style.top = '0px';
         this.container.style.right = 'auto';
+        this.container.style.margin = '0';
+        this.container.style.position = 'fixed';
+        
+        // 请求主进程调整窗口大小到全屏
+        if (window.electronAPI && window.electronAPI.resizeWindow) {
+            window.electronAPI.resizeWindow(screenWidth, screenHeight).then(result => {
+                if (result.success) {
+                    console.log(`窗口已调整为全屏: ${screenWidth} × ${screenHeight}`);
+                }
+            }).catch(error => {
+                console.error('调整窗口到全屏失败:', error);
+            });
+        }
         
         this.container.classList.add('fullscreen-mode');
         this.updateLayoutForSize(screenWidth, screenHeight);
@@ -496,6 +568,14 @@ class DesktopCalendarWidget {
     
     exitFullscreen() {
         this.container.classList.remove('fullscreen-mode');
+        
+        // 重置定位样式，但不强制居中
+        this.container.style.position = 'fixed';
+        this.container.style.transform = '';
+        this.container.style.right = 'auto';
+        this.container.style.margin = '0';
+        // 保持当前位置，不改变 left 和 top
+        
         this.setSize('medium');
         this.showNotification('已退出全屏模式');
     }
@@ -550,9 +630,13 @@ class DesktopCalendarWidget {
         this.showWeekends = true;
         this.showTodayHighlight = true;
         
-        this.container.style.left = '20px';
-        this.container.style.top = '20px';
+        // 重置为默认位置
+        this.container.style.position = 'fixed';
+        this.container.style.left = '50px';
+        this.container.style.top = '50px';
+        this.container.style.transform = '';
         this.container.style.right = 'auto';
+        this.container.style.margin = '0';
         
         this.renderCalendar();
         this.saveSettings();
@@ -801,14 +885,38 @@ class DesktopCalendarWidget {
         }
         
         if (settings.position) {
-            this.container.style.left = settings.position.left;
-            this.container.style.top = settings.position.top;
-            this.container.style.right = 'auto';
+            // 应用保存的位置
+            if (!this.container.classList.contains('fullscreen-mode')) {
+                this.container.style.position = 'fixed';
+                this.container.style.left = settings.position.left;
+                this.container.style.top = settings.position.top;
+                this.container.style.transform = '';
+                this.container.style.right = 'auto';
+                this.container.style.margin = '0';
+            } else {
+                this.container.style.left = settings.position.left;
+                this.container.style.top = settings.position.top;
+                this.container.style.right = 'auto';
+            }
         }
         
         if (settings.dimensions) {
             this.container.style.width = settings.dimensions.width;
             this.container.style.height = settings.dimensions.height;
+            
+            // 从保存的尺寸中提取数值并调整窗口大小
+            const width = parseInt(settings.dimensions.width);
+            const height = parseInt(settings.dimensions.height);
+            
+            if (!isNaN(width) && !isNaN(height) && window.electronAPI && window.electronAPI.resizeWindow) {
+                window.electronAPI.resizeWindow(width, height).then(result => {
+                    if (result.success) {
+                        console.log(`从设置加载窗口大小: ${width} × ${height}`);
+                    }
+                }).catch(error => {
+                    console.error('从设置调整窗口大小失败:', error);
+                });
+            }
         }
     }
     

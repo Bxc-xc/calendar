@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 窗口控制
   minimize: () => ipcRenderer.send('minimize-window'),
   close: () => ipcRenderer.send('close-window'),
+  closeWindow: () => ipcRenderer.send('close-window'),
+  resizeWindow: (width, height) => ipcRenderer.invoke('resize-window', width, height),
   
   // 数据存储
   saveData: (key, data) => {

@@ -8,12 +8,12 @@ let isQuitting = false;
 function createWindow() {
   // 创建浏览器窗口
   mainWindow = new BrowserWindow({
-    width: 320,
-    height: 400,
+    width: 350,
+    height: 600,
     minWidth: 280,
-    minHeight: 350,
-    maxWidth: 600,
-    maxHeight: 800,
+    minHeight: 450,
+    maxWidth: 1920,
+    maxHeight: 1080,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -151,6 +151,28 @@ ipcMain.handle('show-notification', (event, title, body) => {
 ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
+
+// 处理窗口大小调整请求
+ipcMain.handle('resize-window', (event, width, height) => {
+  if (mainWindow) {
+    mainWindow.setSize(width, height);
+    
+    // 总是居中窗口
+    mainWindow.center();
+    
+    return { success: true };
+  }
+  return { success: false };
+});
+
+// 处理窗口关闭请求
+ipcMain.on('close-window', () => {
+  if (mainWindow) {
+    isQuitting = true;
+    mainWindow.close();
+  }
+});
+
 
 // 快捷键注册
 app.on('ready', () => {
