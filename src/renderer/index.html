@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桌面日历</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="widget-container" id="widgetContainer">
+        <div class="widget-header" id="widgetHeader">
+            <div class="widget-title">
+                <span>📅</span>
+                <span>桌面日历</span>
+            </div>
+            <div class="widget-controls">
+                <button class="control-btn settings-btn" id="settingsBtn" title="设置">⚙️</button>
+                <button class="control-btn minimize-btn" id="minimizeBtn" title="最小化">−</button>
+                <button class="control-btn close-btn" id="closeBtn" title="关闭">×</button>
+            </div>
+        </div>
+        
+        <div class="widget-content" id="widgetContent">
+            <div class="current-date">
+                <div class="date-display" id="currentDate"></div>
+                <div class="time-display" id="currentTime"></div>
+            </div>
+            
+            <div class="month-nav">
+                <button class="nav-btn" id="prevMonth">‹</button>
+                <div class="month-year" id="monthYear">
+                    <span class="month-icon"></span>
+                    <span class="month-text"></span>
+                </div>
+                <button class="nav-btn" id="nextMonth">›</button>
+            </div>
+            
+            <table class="calendar-mini" id="miniCalendar">
+                <thead>
+                    <tr>
+                        <th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
+                    </tr>
+                </thead>
+                <tbody id="calendarBody">
+                </tbody>
+            </table>
+            
+            <!-- 日程管理区域 -->
+            <div class="schedule-section">
+                <div class="schedule-header">
+                    <h3>📋 日程管理</h3>
+                    <button class="add-schedule-btn" id="addScheduleBtn" title="添加日程">+</button>
+                </div>
+                <div class="schedule-list" id="scheduleList">
+                    <div class="no-schedules">暂无日程安排</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="settings-overlay" id="settingsOverlay"></div>
+        
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-header">
+                <div class="settings-title">
+                    <span>⚙️</span>
+                    <span>设置</span>
+                </div>
+                <button class="settings-close" id="settingsCloseBtn">×</button>
+            </div>
+            
+            <div class="setting-item">
+                <label class="setting-label">透明度</label>
+                <input type="range" class="slider" id="opacitySlider" min="0.3" max="1" step="0.1" value="0.95">
+                <span class="slider-value" id="opacityValue">95%</span>
+            </div>
+            
+            <div class="setting-item">
+                <label class="setting-label">大小</label>
+                <div class="size-controls">
+                    <button class="size-btn active" data-size="small">小</button>
+                    <button class="size-btn" data-size="medium">中</button>
+                    <button class="size-btn" data-size="large">大</button>
+                    <button class="size-btn" data-size="fullscreen">全屏</button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <label class="setting-label">主题</label>
+                <div class="theme-selector">
+                    <div class="theme-btn theme-light active" data-theme="light" title="浅色"></div>
+                    <div class="theme-btn theme-dark" data-theme="dark" title="深色"></div>
+                    <div class="theme-btn theme-blue" data-theme="blue" title="蓝色"></div>
+                    <div class="theme-btn theme-green" data-theme="green" title="绿色"></div>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <label class="setting-label">动画效果</label>
+                <div class="animation-controls">
+                    <button class="animation-btn active" data-animation="ripple">波纹</button>
+                    <button class="animation-btn" data-animation="pulse">脉冲</button>
+                    <button class="animation-btn" data-animation="bounce">弹跳</button>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <label class="setting-label">显示选项</label>
+                <div class="display-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showWeekends" checked>
+                        <span>显示周末</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showToday" checked>
+                        <span>高亮今天</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="setting-item">
+                <button class="reset-btn" id="resetSettings">重置设置</button>
+            </div>
+            
+            <div class="setting-item">
+                <button class="tour-btn primary" id="startTourBtn" style="width: 100%; margin-top: 5px;">重新开始引导</button>
+            </div>
+            
+            <div class="setting-item">
+                <button class="tour-btn secondary" id="clearTourBtn" style="width: 100%; margin-top: 5px;">清除引导记录</button>
+            </div>
+        </div>
+        
+        <!-- 四个角的调整手柄 -->
+        <div class="resize-handle se" id="resizeHandleSE"></div>
+        <div class="resize-handle sw" id="resizeHandleSW"></div>
+        <div class="resize-handle ne" id="resizeHandleNE"></div>
+        <div class="resize-handle nw" id="resizeHandleNW"></div>
+    </div>
+
+    <!-- 新用户引导 -->
+    <div class="tour-overlay" id="tourOverlay">
+        <div class="tour-spotlight" id="tourSpotlight"></div>
+        <div class="tour-tooltip" id="tourTooltip">
+            <div class="tour-progress" id="tourProgress">1 / 6</div>
+            <div class="tour-title" id="tourTitle">欢迎使用桌面日历！</div>
+            <div class="tour-description" id="tourDescription">让我来为您介绍这个强大的日历应用的主要功能。</div>
+            <div class="tour-buttons">
+                <button class="tour-btn skip" id="tourSkip">跳过引导</button>
+                <button class="tour-btn secondary" id="tourPrev" style="display: none;">上一步</button>
+                <button class="tour-btn primary" id="tourNext">下一步</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日程模态框 -->
+    <div class="schedule-modal" id="scheduleModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">添加日程</div>
+                <button class="modal-close" id="modalClose">×</button>
+            </div>
+            
+            <form id="scheduleForm">
+                <div class="form-group">
+                    <label class="form-label">日程标题</label>
+                    <input type="text" class="form-input" id="scheduleTitle" placeholder="请输入日程标题" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">日期</label>
+                        <input type="date" class="form-input" id="scheduleDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">时间</label>
+                        <input type="time" class="form-input" id="scheduleTime">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">优先级</label>
+                    <div class="priority-selector">
+                        <button type="button" class="priority-btn priority-low active" data-priority="low">低</button>
+                        <button type="button" class="priority-btn priority-medium" data-priority="medium">中</button>
+                        <button type="button" class="priority-btn priority-high" data-priority="high">高</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">描述</label>
+                    <textarea class="form-input form-textarea" id="scheduleDescription" placeholder="请输入日程描述（可选）"></textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">取消</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 通知容器 -->
+    <div class="notification-container" id="notificationContainer">
+        <!-- 通知将在这里显示 -->
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

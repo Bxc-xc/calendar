@@ -1,0 +1,130 @@
+{
+  "name": "desktop-calendar",
+  "version": "1.0.0",
+  "description": "桌面日历小插件 - 轻量、美观、可自定义的桌面日历",
+  "main": "main.js",
+  "author": "Calendar Developer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/desktop-calendar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/desktop-calendar/issues"
+  },
+  "homepage": "https://github.com/your-username/desktop-calendar#readme",
+  "keywords": [
+    "calendar",
+    "desktop",
+    "electron",
+    "productivity",
+    "time-management",
+    "reminder"
+  ],
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ],
+  "build": {
+    "appId": "com.calendar.desktop",
+    "productName": "桌面日历",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist/**/*",
+      "main.js",
+      "preload.js",
+      "assets/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "features": {
+    "calendar": true,
+    "events": true,
+    "reminders": true,
+    "themes": true,
+    "notifications": true,
+    "tray": true,
+    "shortcuts": true
+  },
+  "themes": [
+    {
+      "id": "light",
+      "name": "简约",
+      "description": "简洁明亮的主题"
+    },
+    {
+      "id": "dark",
+      "name": "深色",
+      "description": "护眼的深色主题"
+    },
+    {
+      "id": "cartoon",
+      "name": "卡通",
+      "description": "可爱的卡通主题"
+    }
+  ],
+  "eventTypes": [
+    {
+      "id": "todo",
+      "name": "待办",
+      "icon": "📝",
+      "color": "#FF6B6B"
+    },
+    {
+      "id": "reminder",
+      "name": "提醒",
+      "icon": "🔔",
+      "color": "#4ECDC4"
+    },
+    {
+      "id": "birthday",
+      "name": "生日",
+      "icon": "🎂",
+      "color": "#FFE66D"
+    },
+    {
+      "id": "holiday",
+      "name": "节日",
+      "icon": "🎉",
+      "color": "#FF8B94"
+    },
+    {
+      "id": "meeting",
+      "name": "会议",
+      "icon": "💼",
+      "color": "#A8E6CF"
+    }
+  ],
+  "shortcuts": {
+    "toggleWindow": "CommandOrControl+Shift+C",
+    "quit": "CommandOrControl+Q"
+  },
+  "storage": {
+    "type": "localStorage",
+    "prefix": "desktop-calendar-"
+  }
+}
